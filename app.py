@@ -768,9 +768,11 @@ if ok:
             "Choose 1–3 films",
             ml,
             default=[m for m in defaults if m in ml],
-            max_selections=3,
             key="multi_sel"
         )
+        if len(sel_movies) > 3:
+            st.warning("Please select a maximum of 3 films.")
+            sel_movies = sel_movies[:3]
 
         if sel_movies:
             # Show selected films as feature boxes
@@ -855,6 +857,8 @@ if ok:
                         why = explain_rec(sel_movies, row, df, indices)
                         rated = row['title'] in st.session_state.user_ratings
                         user_stars = st.session_state.user_ratings.get(row['title'], {}).get('stars', 0)
+                        user_stars_str = '★' * user_stars  # pre-compute to avoid nested f-string quote bug
+                        user_rating_html = f'<span style="color:var(--gold);">YOUR RATING: {user_stars_str}</span>' if rated else ''
 
                         st.markdown(f"""
                         <div class="film-card">
@@ -871,7 +875,7 @@ if ok:
                             <span>CONTENT <span class="score-val">{cs}%</span></span>
                             <span>HYBRID <span class="score-val" style="color:var(--gold-light);">{hs}%</span></span>
                             <span>POPULARITY <span class="score-val">{ps}%</span></span>
-                            {f'<span style="color:var(--gold);">YOUR RATING: {"★"*user_stars}</span>' if rated else ''}
+                            {user_rating_html}
                           </div>
                           <div class="score-bar-bg">
                             <div class="score-bar-fill" style="width:{max(hs,2)}%"></div>
@@ -1175,7 +1179,7 @@ if ok:
                     ort = int(other['runtime'])     if pd.notna(other['runtime'])     else 0
                     bud = f"${data['budget']/1e6:.0f}M"   if pd.notna(data['budget'])  else 'N/A'
                     rev = f"${data['revenue']/1e6:.0f}M"  if pd.notna(data['revenue']) else 'N/A'
-                    pro = f"${data['profit']/1e6:.0f}M"   if pd.notna(data.get('profit')) else 'N/A'
+                    pro = f"${data['profit']/1e6:.0f}M"   if 'profit' in data.index and pd.notna(data['profit']) else 'N/A'
                     rc  = "cmp-win" if data['vote_average'] >= other['vote_average'] else "cmp-val"
                     vc  = "cmp-win" if data['vote_count']   >= other['vote_count']   else "cmp-val"
                     tc  = "cmp-win" if (rt or 999) <= (ort or 999)                  else "cmp-val"
